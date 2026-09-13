@@ -1,0 +1,49 @@
+WhatsApp self-chat me naye /ns commands check karo aur unka jawab do. Ye automated hourly run hai - koi insaan intezaar nahi kar raha. Agar koi naya command nahi mila to CHUPCHAP khatam karo, koi message mat bhejo.
+
+SELF_JID = <APNA JID YAHAN DAALO, jaise 910000000000@s.whatsapp.net>
+
+STEP 1 - self-chat padho:
+Perisclaw ka `get_messages` call karo: chat_id = SELF_JID (upar wala, literal "self" yahan kaam NAHI karta), limit 30.
+
+STEP 2 - filter karo. YE SABSE ZAROORI STEP HAI:
+Self-chat me HAR message ka `from_me: true` hota hai, to from_me se filter karna bekaar hai. Sahi field `performed_by` hai:
+- `performed_by` null ya khali = insaan ne phone pe type kiya -> YE PROCESS KARO
+- `performed_by` = "perisclaw" -> SKIP
+- `performed_by` me koi aur value (API/script/tumhara khud ka pichla reply) -> SKIP
+
+Ye filter chhodoge to apne hi jawab ko command samajh kar infinite loop bana doge.
+
+STEP 3 - time window:
+Sirf wo messages lo jo pichhle 70 minute ke andar aaye hain (`timestamp` ISO 8601 hota hai, jaise "2026-09-13T11:49:32.000Z"). Isse purane command dobara process nahi honge.
+
+STEP 4 - command dhoondo:
+Bache hue messages me se jo "/ns " se shuru hote hain. Supported:
+- /ns today      -> aaj ki memories
+- /ns week       -> pichhle 7 din ki memories
+- /ns tasks      -> pending reminders, owner ke hisaab se grouped
+- /ns summary    -> NeoSapien daily summary
+- /ns search <query>  -> us query pe memory search
+
+Koi bhi /ns command nahi mila -> kuch mat bhejo, bas khatam karo.
+
+STEP 5 - data lao (NeoSapien se):
+- today/week: `search_memories` with start_date aur end_date (week = aaj se 7 din pehle tak), limit 100, sort_order "asc". total_pages > 1 ho to saare pages lao.
+- tasks: `get_reminders` limit 100. Pagination `{"pagination": {"has_more": ...}}` shape me aati hai - has_more true ho to agla page lao. Sirf status "pending" wale rakho. Owner ke hisaab se group karo (owner ka case ignore karo, "Name" aur "name" ek hi banda hai). Jinme `who_inferred` ya `due_inferred` true hai unpe "(owner guessed)" / "(due guessed)" likh do - wo AI ka andaza hai, kisi ne bola nahi.
+- summary: `get_daily_summary` bina koi argument (latest aa jayega).
+- search: `search_memories` with query = user ka text, limit 10.
+
+Memory object wrapper ke andar nested ho sakta hai: {"memory": {...}, "user": {...}} - pehle item["memory"] dekho, na mile to seedha item.
+
+STEP 6 - jawab bhejo (Perisclaw se):
+`message_send` with chat_id = "self" (bhejne ke liye "self" chalta hai), text = formatted jawab.
+WhatsApp markup, Markdown NAHI:
+- bold = *single asterisk*, double asterisk kabhi nahi
+- italic = _underscore_
+- hash headers aur [text](url) kaam nahi karte - raw URL likho
+- em dash / en dash kabhi nahi, normal hyphen (-)
+4000 characters se lamba ho to tukdon me todo, har tukde pe "(1/3)" style footer.
+
+Agar ek se zyada naye command mile to har ek ka alag jawab bhejo, order me.
+Agar command samajh na aaye to short help bhejo jisme paanch supported commands listed hon.
+
+Bas yahi karna hai. Koi file mat banao, koi code mat likho, koi repo mat chhedo, SELF_JID ke alawa kisi aur chat me kuch mat bhejo.

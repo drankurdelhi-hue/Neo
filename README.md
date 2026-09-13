@@ -2,9 +2,17 @@
 
 NeoSapien ka data WhatsApp self-chat me push karta hai, taaki Perisclaw use apni normal chat history ki tarah padh sake.
 
+Do tarah se chal sakta hai:
+
 ```
-NeoSapien MCP  -->  ns_sync.py  -->  WhatsApp self-chat  -->  Perisclaw
+Routines (default, koi server nahi):
+  NeoSapien  -->  Claude Routine  -->  Perisclaw  -->  WhatsApp self-chat  -->  Perisclaw agent
+
+Script (real-time listen chahiye to):
+  NeoSapien MCP  -->  ns_sync.py  -->  Perisclaw  -->  WhatsApp self-chat  -->  Perisclaw agent
 ```
+
+Dono me WhatsApp tak pahunchane wala Perisclaw hi hai — wahi gateway hai.
 
 ---
 
@@ -213,6 +221,7 @@ Jo naam abhi confirm nahi hue, unhe `--approve-names` se ek-ek karke resolve kar
 | `ns-sync.service` | systemd unit for `--listen`, `Restart=always` |
 | `env.example` | Tokens ka template, `.env` isse banao |
 | `ns_peri_bridge.py` | Alag script — reminders ko owner ke WhatsApp pe bhejta hai, interactive name approval ke saath |
+| `routines/*.txt` | Claude Routines ke ready prompts (server-less rasta, section 6a) |
 | `contacts.example.json` | Whitelist ka template (ye repo me hai) |
 | `contacts.json` | Asli name-to-JID whitelist — **gitignored**, sirf VPS pe |
 
@@ -221,6 +230,33 @@ Repo me kabhi nahi jaate: `.env` (tokens), `contacts.json` (asli numbers), `sync
 ---
 
 ## 6. Deployment
+
+Do raste hain. **Routines wala rasta default hai** — usme koi server nahi chahiye.
+
+### 6a. Claude Routines (koi server nahi)
+
+Yahan script chalti hi nahi. Claude khud bridge ka kaam karta hai: scheduled Routine fire hoti hai, Claude NeoSapien connector se data leta hai aur Perisclaw connector se self-chat me daal deta hai. Koi token, koi `.env`, koi cron, koi systemd.
+
+Prompts `routines/` folder me ready hain:
+
+| File | Suggested schedule |
+|---|---|
+| `routines/daily-memories-digest.txt` | roz 21:00 local |
+| `routines/hourly-ns-listener.txt` | har ghanta |
+
+Setup:
+1. claude.ai → Routines → new Routine
+2. Poori `.txt` file ka content prompt me paste karo
+3. **NeoSapien aur Perisclaw connectors attach karo** — ye step chhoda to Routine fire hogi par kaam nahi karegi, kyunki fired session ke paas `mcp__*` tools nahi honge
+4. `hourly-ns-listener.txt` me `SELF_JID` ki jagah apna asli JID daalo (wo file me placeholder hai, kyunki ye repo public hai)
+
+Routine CLI/MCP se banane ki koshish mat karo jab tak `connectors` parameter aapke org pe enabled na ho — warna connector-less Routine banti hai jo chupchap fail hoti hai.
+
+**Jo Routines se nahi hota:** `--listen` ka real-time polling. Routines ka minimum interval normally 1 ghanta hai aur firings ke beech koi process zinda nahi rehta, to WhatsApp me `/ns` likhne pe jawab 0-60 min late aata hai. Sub-minute chahiye to 6b.
+
+Aur `ns_peri_bridge.py` (reminders seedha owner ko bhejna) Routines se nahi chalta — wo interactive approval maangta hai, to usko manually chalao.
+
+### 6b. VPS (real-time listen ke liye)
 
 Contabo VPS pe (wahi jahan CRM chal raha hai):
 
