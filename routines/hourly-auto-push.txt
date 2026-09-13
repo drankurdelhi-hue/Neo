@@ -1,0 +1,39 @@
+Pichhle ek ghante ki nayi NeoSapien memories WhatsApp self-chat me bhej do. Ye automated hourly run hai - koi insaan intezaar nahi kar raha. Agar koi nayi memory nahi mili to CHUPCHAP khatam karo, koi message mat bhejo.
+
+STEP 1 - NeoSapien se naya data lao:
+`search_memories` call karo:
+- start_date = abhi se 70 minute pehle ka time, format "YYYY-MM-DDTHH:MM:SS"
+- end_date = abhi ka time, format "YYYY-MM-DDTHH:MM:SS"
+- limit 100, sort_by "created_at", sort_order "asc"
+70 minute ka window isliye hai (60 nahi) taaki do runs ke beech koi memory chhoot na jaye. Thoda overlap chalega.
+Response me `total_pages` dekho - 1 se zyada ho to saare pages lao.
+
+STEP 2 - agar kuch nahi mila:
+`total_found` 0 hai ya items khali hai -> KUCH MAT BHEJO. Bas khatam karo. Ye normal hai, din me kai ghante koi recording nahi hoti.
+
+STEP 3 - memory object ka shape:
+Result `items` array me aata hai, har item ek wrapper hai: {"memory": {...}, "user": {...}}. item["memory"] ke andar jao. Fields: title, summary, created_at, domains (array).
+created_at me timezone offset hota hai (jaise "2026-09-13T12:03:17.536000+05:30") - usi local time ko use karo.
+
+STEP 4 - digest banao. YE WHATSAPP MARKUP HAI, MARKDOWN NAHI:
+- bold = *single asterisk*. Double asterisk kabhi nahi - wo WhatsApp me literally dikhta hai.
+- italic = _underscore_
+- Hash headers aur [text](url) kaam nahi karte. Raw URL likho.
+- Em dash aur en dash kabhi mat likho. Normal hyphen (-) use karo.
+
+Format:
+Pehli line: *Nayi Memories* - N (HH:MM se HH:MM)
+Phir har memory ek line me:
+- HH:MM chhota description
+
+Agar 5 se zyada memories hain to domains[0] ke hisaab se group kar do:
+*Domain Name* (count)
+- HH:MM chhota description
+
+Description title aur summary se banao, ek line me, chhota aur scannable. Poora summary paste mat karo. Naam aur jagah jo summary me hain wo rakh lo - wahi kaam ki cheez hoti hai.
+
+STEP 5 - Perisclaw se bhejo:
+`message_send` call karo, chat_id = "self", text = digest.
+4000 characters se lamba ho to tukdon me todo aur har tukde pe "(1/2)" style footer lagao. Ek ghante ke data me aam taur pe aisa nahi hota.
+
+Bas yahi karna hai. Koi file mat banao, koi code mat likho, koi repo mat chhedo, kisi aur chat me message mat bhejo. Agar data nahi hai to bilkul chup raho - khali "koi memory nahi mili" wala message mat bhejo, warna din me 20 bekaar messages aayenge.
