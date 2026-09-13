@@ -1,0 +1,23 @@
+[Unit]
+Description=ns-sync listen mode (NeoSapien -> Perisclaw -> WhatsApp bridge)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ns-sync
+Group=ns-sync
+WorkingDirectory=/opt/ns-sync
+EnvironmentFile=/opt/ns-sync/.env
+ExecStart=/opt/ns-sync/venv/bin/python /opt/ns-sync/ns_sync.py --listen --poll 20
+Restart=always
+RestartSec=10
+
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+ReadWritePaths=/opt/ns-sync
+
+[Install]
+WantedBy=multi-user.target

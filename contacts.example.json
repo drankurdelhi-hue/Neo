@@ -1,0 +1,13 @@
+{
+  "_comment": "Copy to contacts.json and fill in real JIDs. contacts.json is gitignored - it holds real phone numbers and must never be committed.",
+
+  "_comment_resolved": "Resolved people: jid set = safe to message.",
+  "example person":    {"jid": "910000000001@s.whatsapp.net", "label": "Example Person (WhatsApp contact name)"},
+
+  "_comment_blocked": "jid: null = BLOCKED, never message. Use this for role labels the AI extracted as an owner, transcription artifacts, and your own name.",
+  "interior designer": {"jid": null, "label": "BLOCKED - role, not a person"},
+  "furniture vendor":  {"jid": null, "label": "BLOCKED - role, not a person"},
+  "developer":         {"jid": null, "label": "BLOCKED - role, not a person"},
+  "speaker 2":         {"jid": null, "label": "BLOCKED - transcription artifact"},
+  "your own name":     {"jid": null, "label": "BLOCKED - operator, never self-assign"}
+}
